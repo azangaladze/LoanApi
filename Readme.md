@@ -54,13 +54,13 @@ There are roles in this project: Accountant and User
 ## Structure Overview
 Application consists of following parts:
 ### src
-#### Api
+* #### Api
 This layer contains all application logic. Here are all controllers and validations
-#### Core
+* #### Core
 This layer contains entities, entity fields, interfaces
-#### Infrastructure
+* #### Infrastructure
 This layer contains classes for accessing database, services, models
-### test
+### tests
 Contains all tests for this application
 
 
