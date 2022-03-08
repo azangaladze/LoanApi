@@ -7,6 +7,7 @@ using LoanProject.Infrastructure.Helpers;
 using LoanProject.Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -26,20 +27,23 @@ namespace LoanProject.Api.Controllers
         private readonly IAccountService _accountService;
         private readonly AppSettings _appSettings;
         private readonly IMapper _mapper;
+        private readonly ILogger<AccountController> _logger;
         public AccountController(IAccountService accountService,
             IOptions<AppSettings> appSettings,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<AccountController> logger)
         {
             _accountService = accountService;
             _appSettings = appSettings.Value;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<ActionResult<UserModel>> CreateUserAsync(UserModel user)
         {
-            
+
             user.Password = PasswordHasher.HashPass(user.Password);
 
             var mapped = _mapper.Map<User>(user);
@@ -48,19 +52,28 @@ namespace LoanProject.Api.Controllers
             List<string> errorsList = new();
             if (!result.IsValid)
             {
-                foreach (var item in result.Errors)
+                foreach (var error in result.Errors)
                 {
-                    errorsList.Add(item.ErrorMessage);
+                    errorsList.Add(error.ErrorMessage);
                 }
                 return BadRequest(errorsList);
             }
-            
-            var create = await _accountService.CreateAsync(mapped);
 
-            if (create == null)
+            try
             {
-                return BadRequest($"User with username {user.UserName} is already registered");
+                var create = await _accountService.CreateAsync(mapped);
+
+                if (create == null)
+                {
+                    return BadRequest($"User with username {user.UserName} is already registered");
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
+            }
+
 
             return Created("", mapped);
 
@@ -70,10 +83,11 @@ namespace LoanProject.Api.Controllers
         [HttpPost("login")]
         public IActionResult Login(LoginModel userModel)
         {
-            var user = _accountService.Login(userModel.Username,userModel.Password);
+            var user = _accountService.Login(userModel.Username, userModel.Password);
             if (user == null)
+            {
                 return BadRequest("Username or Password is incorrect");
-
+            }
             var mapped = _mapper.Map<User>(user);
             string tokenString = GenerateToken(mapped);
             return Ok(new

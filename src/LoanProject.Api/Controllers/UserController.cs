@@ -7,9 +7,10 @@ using LoanProject.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using LoanProject.Core.FieldStrings;
 using LoanProject.Api.Validators;
-using System.Security.Claims;
 using LoanProject.Api.Helper;
 using LoanProject.Core.Interfaces;
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace LoanProject.Api.Controllers
 {
@@ -20,10 +21,14 @@ namespace LoanProject.Api.Controllers
     {
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
-        public UserController(IUserService userService, IMapper mapper)
+        private readonly ILogger<UserController> _logger;
+        public UserController(IUserService userService,
+            IMapper mapper,
+            ILogger<UserController> logger)
         {
             _userService = userService;
             _mapper = mapper;
+            _logger = logger;
         }
         [Authorize(Roles = Roles.Accountant)]
         [HttpGet("getall")]
@@ -32,7 +37,7 @@ namespace LoanProject.Api.Controllers
             var users = await _userService.GetUsersAsync();
             if (users == null)
             {
-                return BadRequest();
+                return NotFound($"There are no users");
             }
 
             return Ok(users);
@@ -60,15 +65,23 @@ namespace LoanProject.Api.Controllers
         [HttpDelete("delete/{id}")]
         public async Task<ActionResult> DeleteUserAsync(int id)
         {
-            var deleteUser = await _userService.DeleteAsync(id);
-
-            if (id == 1) {
+            if (id == 1)
+            {
                 return BadRequest($"You cannot delete your own user");
             }
-
-            if (deleteUser == false)
+            try
             {
-                NotFound($"There is no user with id {id}");
+                var deleteUser = await _userService.DeleteAsync(id);
+
+                if (deleteUser == false)
+                {
+                    NotFound($"There is no user with id {id}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
             }
 
             return Ok($"User with id {id} deleted");
@@ -90,18 +103,26 @@ namespace LoanProject.Api.Controllers
             List<string> errorsList = new();
             if (!result.IsValid)
             {
-                foreach (var item in result.Errors)
+                foreach (var error in result.Errors)
                 {
-                    errorsList.Add(item.ErrorMessage);
+                    errorsList.Add(error.ErrorMessage);
                 }
                 return BadRequest(errorsList);
             }
 
-            var updateUser = await _userService.UpdateAsync(id, mapped);
-
-            if (updateUser == false)
+            try
             {
-                NotFound($"There is no user with id {id}");
+                var updateUser = await _userService.UpdateAsync(id, mapped);
+
+                if (updateUser == false)
+                {
+                    NotFound($"There is no user with id {id}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
             }
 
             return Ok($"User with id {id} updated");
@@ -109,15 +130,24 @@ namespace LoanProject.Api.Controllers
 
         [Authorize(Roles = Roles.Accountant)]
         [HttpPatch("changeblockstatus/{id}")]
-        public async Task<ActionResult> ChangeUserStatusAsync(int id, bool IsBlocked)
+        public async Task<ActionResult> ChangeUserStatusAsync(int id, bool isBlocked)
         {
-            var changed = await _userService.ChangeStatusAsync(id, IsBlocked);
-            if (changed == false)
+
+            try
             {
-                return NotFound($"There is no user with id {id}");
+                var changed = await _userService.ChangeStatusAsync(id, isBlocked);
+                if (changed == false)
+                {
+                    return NotFound($"There is no user with id {id}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
             }
 
-            return Ok($"Blocked status for user with id {id} changed to {IsBlocked}");
+            return Ok($"Blocked status for user with id {id} changed to {isBlocked}");
         }
 
     }

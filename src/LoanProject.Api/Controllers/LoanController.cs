@@ -7,6 +7,7 @@ using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,14 +24,18 @@ namespace LoanProject.Api.Controllers
         private readonly ILoanService _loanService;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
+        private readonly ILogger<AccountController> _logger;
         public LoanController(ILoanService loanService,
             IUserService userService,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<AccountController> logger)
         {
             _loanService = loanService;
             _userService = userService;
             _mapper = mapper;
+            _logger = logger;
         }
+
         [Authorize(Roles = Roles.Accountant)]
         [HttpGet("getall")]
         public async Task<ActionResult<IEnumerable<LoanModel>>> GetAllLoansAsync()
@@ -78,14 +83,22 @@ namespace LoanProject.Api.Controllers
             List<string> errorsList = new();
             if (!result.IsValid)
             {
-                foreach (var item in result.Errors)
+                foreach (var error in result.Errors)
                 {
-                    errorsList.Add(item.ErrorMessage);
+                    errorsList.Add(error.ErrorMessage);
                 }
                 return BadRequest(errorsList);
             }
 
-            await _loanService.CreateAsync(mapped);
+            try
+            {
+                await _loanService.CreateAsync(mapped);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
+            }
 
             return CreatedAtAction(nameof(GetLoanByIdAsync), new { id = loan.Id }, mapped);
 
@@ -115,12 +128,22 @@ namespace LoanProject.Api.Controllers
             {
                 return BadRequest("You are in a black list, you cannot delete your loan");
             }
-            var deleteLoan = await _loanService.DeleteAsync(id);
 
-            if (deleteLoan == false)
+            try
             {
-                NotFound($"There is no loan with id {id}");
+                var deleteLoan = await _loanService.DeleteAsync(id);
+
+                if (deleteLoan == false)
+                {
+                    NotFound($"There is no loan with id {id}");
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
+            }
+
 
             return Ok($"Loan with id {id} deleted");
         }
@@ -160,9 +183,9 @@ namespace LoanProject.Api.Controllers
             List<string> errorsList = new();
             if (!result.IsValid)
             {
-                foreach (var item in result.Errors)
+                foreach (var error in result.Errors)
                 {
-                    errorsList.Add(item.ErrorMessage);
+                    errorsList.Add(error.ErrorMessage);
                 }
                 return BadRequest(errorsList);
             }
@@ -181,10 +204,19 @@ namespace LoanProject.Api.Controllers
             {
                 return NotFound($"There is no loan with id {id}");
             }
-            var changed = await _loanService.ChangeLoanStatusAsync(id, Status);
-            if (changed == false)
+
+            try
             {
-                return BadRequest($"Status can only be changed to Positive or Negative");
+                var changed = await _loanService.ChangeLoanStatusAsync(id, Status);
+                if (changed == false)
+                {
+                    return BadRequest($"Status can only be changed to Positive or Negative");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                throw;
             }
             return Ok($"Status for loan with id {id} changed to {Status}");
         }

@@ -20,7 +20,9 @@ namespace LoanProject.Infrastructure.Services
             foreach (var usr in _dbContext.Users.ToList())
             {
                 if (usr.UserName == user.UserName)
+                {
                     return null;
+                }
             }
             await _dbContext.Users.AddAsync(user);
             await _dbContext.SaveChangesAsync();
@@ -30,15 +32,21 @@ namespace LoanProject.Infrastructure.Services
         public User Login(string userName, string password)
         {
             if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
+            {
                 return null;
+            }
 
             var user = _dbContext.Users.SingleOrDefault(x => x.UserName == userName);
 
             if (user == null)
+            {
                 return null;
+            }
 
             if (PasswordHasher.HashPass(password) != user.Password)
+            {
                 return null;
+            }
 
             return user;
         }
