@@ -2,7 +2,7 @@
 using LoanProject.Core.Entities;
 using LoanProject.Infrastructure.Models;
 
-namespace LoanProject.Api.Helper
+namespace LoanProject.Api.Helpers
 {
     public class MapperProfile : Profile
     {

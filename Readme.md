@@ -21,7 +21,7 @@ There are some features in this project:
 * Roles
 * Storing hashed passwords in db
 * Fluent Validation
-* Custom error messages for 401 and 403 codes
+* Custom Exceptions and error messages
 * Authorize in Swagger 
 * xUnit test with fluent assertion
 	

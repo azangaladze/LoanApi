@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LoanProject.Infrastructure.Helpers
 {
-    public class PasswordHasher
+    public static class PasswordHasher
     {
         public static string HashPass(string password)
         {

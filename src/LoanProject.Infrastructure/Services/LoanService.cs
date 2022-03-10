@@ -1,8 +1,10 @@
 ﻿using LoanProject.Core.Entities;
+using LoanProject.Core.Exceptions;
 using LoanProject.Core.FieldStrings;
 using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -27,11 +29,10 @@ namespace LoanProject.Infrastructure.Services
             var dbLoan = await _dbContext.Loans.FindAsync(id);
             if (dbLoan == null)
             {
-                return false;
+                throw new EntityNotFoundException<Loan>();
             }
             _dbContext.Loans.Remove(dbLoan);
-            await _dbContext.SaveChangesAsync();
-            return true;
+            return await _dbContext.SaveChangesAsync() > 0;
         }
 
         public async Task<Loan> GetByIdAsync(int id)
@@ -39,7 +40,7 @@ namespace LoanProject.Infrastructure.Services
             var dbLoan = await _dbContext.Loans.FindAsync(id);
             if (dbLoan == null)
             {
-                return null;
+                throw new EntityNotFoundException<Loan>();
             }
             return dbLoan;
         }
@@ -65,23 +66,24 @@ namespace LoanProject.Infrastructure.Services
             dbLoan.Loanstatus = loan.Loanstatus;
 
             _dbContext.Loans.Update(dbLoan);
-            await _dbContext.SaveChangesAsync();
-            return true;
+            return await _dbContext.SaveChangesAsync() > 0;
 
         }
 
         public async Task<bool> ChangeLoanStatusAsync(int id, string status)
         {
-            var dbLoan = await _dbContext.Loans.FindAsync(id);
 
+            var dbLoan = await _dbContext.Loans.FindAsync(id);
+            if (dbLoan == null)
+            {
+                throw new EntityNotFoundException<Loan>();
+            }
             if (status.ToLower() == LoanStatus.Positive.ToLower() ||
                 status.ToLower() == LoanStatus.Negative.ToLower())
             {
                 dbLoan.Loanstatus = status;
-
-                _dbContext.Loans.Update(dbLoan);
-                await _dbContext.SaveChangesAsync();
-                return true;
+                return await _dbContext.SaveChangesAsync() > 0;
+                
             }
 
             return false;

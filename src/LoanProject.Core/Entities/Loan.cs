@@ -5,7 +5,6 @@ namespace LoanProject.Core.Entities
 {
     public class Loan
     {
-        
         public int Id { get; set; }
         public string Type { get; set; }
         public double Amount { get; set; }

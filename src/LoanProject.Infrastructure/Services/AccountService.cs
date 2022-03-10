@@ -1,7 +1,9 @@
 ﻿using LoanProject.Core.Entities;
+using LoanProject.Core.Exceptions;
 using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Context;
 using LoanProject.Infrastructure.Helpers;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,12 +19,10 @@ namespace LoanProject.Infrastructure.Services
 
         public async Task<User> CreateAsync(User user)
         {
-            foreach (var usr in _dbContext.Users.ToList())
+            var userExists = _dbContext.Users.Any(i => i.UserName.ToLower() == user.UserName.ToLower());
+            if (userExists)
             {
-                if (usr.UserName == user.UserName)
-                {
-                    return null;
-                }
+                throw new UserExistsException();
             }
             await _dbContext.Users.AddAsync(user);
             await _dbContext.SaveChangesAsync();
@@ -31,21 +31,17 @@ namespace LoanProject.Infrastructure.Services
 
         public User Login(string userName, string password)
         {
-            if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
-            {
-                return null;
-            }
 
             var user = _dbContext.Users.SingleOrDefault(x => x.UserName == userName);
 
             if (user == null)
             {
-                return null;
+                throw new EntityNotFoundException<User>();
             }
 
             if (PasswordHasher.HashPass(password) != user.Password)
             {
-                return null;
+                throw new IncorrectPasswordException();
             }
 
             return user;

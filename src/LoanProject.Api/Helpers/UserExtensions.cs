@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Security.Claims;
 
-namespace LoanProject.Api.Helper
+namespace LoanProject.Api.Helpers
 {
     public static class UserExtensions
     {

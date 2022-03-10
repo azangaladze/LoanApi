@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using LoanProject.Infrastructure.Models;
 using AutoMapper;
@@ -7,10 +6,12 @@ using LoanProject.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using LoanProject.Core.FieldStrings;
 using LoanProject.Api.Validators;
-using LoanProject.Api.Helper;
 using LoanProject.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
+using LoanProject.Core.Exceptions;
+using LoanProject.Api.Helpers;
 
 namespace LoanProject.Api.Controllers
 {
@@ -29,70 +30,79 @@ namespace LoanProject.Api.Controllers
             _userService = userService;
             _mapper = mapper;
             _logger = logger;
+
         }
+
         [Authorize(Roles = Roles.Accountant)]
-        [HttpGet("getall")]
-        public async Task<ActionResult<IEnumerable<UserModel>>> GetAllUsersAsync()
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllUsersAsync()
         {
             var users = await _userService.GetUsersAsync();
-            if (users == null)
+            if (!users.Any())
             {
+                _logger.LogError("Error - No users found");
                 return NotFound($"There are no users");
             }
 
             return Ok(users);
-
         }
+
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserModel>> GetUserByIdAsync(int id)
+        public async Task<IActionResult> GetUserByIdAsync(int id)
         {
             var userId = User.GetUserId();
             if (User.IsInRole(Roles.User) && userId != id)
             {
+                _logger.LogError("Error - Trying to get other user");
                 return BadRequest($"You cannot view other user's information");
             }
-            var user = await _userService.GetByIdAsync(id);
 
-            if (user == null)
+            try
             {
+                return Ok(await _userService.GetByIdAsync(id));
+            }
+            catch (EntityNotFoundException<User>)
+            {
+                _logger.LogError("Error - Invalid user id, user not found");
                 return NotFound($"There is no user with id {id}");
             }
-
-            return Ok(user);
         }
 
         [Authorize(Roles = Roles.Accountant)]
-        [HttpDelete("delete/{id}")]
-        public async Task<ActionResult> DeleteUserAsync(int id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUserAsync(int id)
         {
-            if (id == 1)
+            var userId = User.GetUserId();
+            if (id == userId)
             {
+                _logger.LogError("Error - Trying to delete own user");
                 return BadRequest($"You cannot delete your own user");
             }
             try
             {
-                var deleteUser = await _userService.DeleteAsync(id);
-
-                if (deleteUser == false)
-                {
-                    NotFound($"There is no user with id {id}");
-                }
+                await _userService.DeleteAsync(id);
+            }
+            catch (EntityNotFoundException<User>)
+            {
+                _logger.LogError("Error - Invalid user id, user not found");
+                return NotFound($"There is no user with id {id}");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                throw;
+                return StatusCode(500, ex.Message);
             }
 
             return Ok($"User with id {id} deleted");
         }
 
-        [HttpPut("update/{id}")]
-        public async Task<ActionResult> UpdateUserAsync(int id, UserModel user)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUserAsync(int id, UserModel user)
         {
             var userId = User.GetUserId();
             if (User.IsInRole(Roles.User) && userId != id)
             {
+                _logger.LogError("Error - Trying to update someone else's user");
                 return BadRequest($"You cannot update other user's information");
             }
 
@@ -100,51 +110,49 @@ namespace LoanProject.Api.Controllers
 
             var validator = new UserValidator();
             var result = validator.Validate(mapped);
-            List<string> errorsList = new();
+
             if (!result.IsValid)
             {
-                foreach (var error in result.Errors)
-                {
-                    errorsList.Add(error.ErrorMessage);
-                }
-                return BadRequest(errorsList);
+                _logger.LogError("Error - One or more Validation errors occured");
+                return BadRequest(result.Errors.Select(s => s.ErrorMessage));
             }
 
             try
             {
                 var updateUser = await _userService.UpdateAsync(id, mapped);
 
-                if (updateUser == false)
+                if (!updateUser)
                 {
-                    NotFound($"There is no user with id {id}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, ex.Message);
-                throw;
-            }
-
-            return Ok($"User with id {id} updated");
-        }
-
-        [Authorize(Roles = Roles.Accountant)]
-        [HttpPatch("changeblockstatus/{id}")]
-        public async Task<ActionResult> ChangeUserStatusAsync(int id, bool isBlocked)
-        {
-
-            try
-            {
-                var changed = await _userService.ChangeStatusAsync(id, isBlocked);
-                if (changed == false)
-                {
+                    _logger.LogError("Error - Invalid user id, user not found");
                     return NotFound($"There is no user with id {id}");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
-                throw;
+                return StatusCode(500, ex.Message);
+            }
+
+            return Ok($"User with id {id} updated");
+        }
+
+        [Authorize(Roles = Roles.Accountant)]
+        [HttpPatch("status/{id}/{isblocked}")]
+        public async Task<IActionResult> ChangeUserStatusAsync(int id, bool isBlocked)
+        {
+            try
+            {
+                var changed = await _userService.ChangeStatusAsync(id, isBlocked);
+                if (!changed)
+                {
+                    _logger.LogError("Error - Invalid user id, user not found");
+                    return NotFound($"There is no user with id {id}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return StatusCode(500, ex.Message);
             }
 
             return Ok($"Blocked status for user with id {id} changed to {isBlocked}");

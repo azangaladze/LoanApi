@@ -1,8 +1,10 @@
 ﻿using LoanProject.Core.Entities;
+using LoanProject.Core.Exceptions;
 using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Context;
 using LoanProject.Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -21,16 +23,15 @@ namespace LoanProject.Infrastructure.Services
             var dbUser = await _dbContext.Users.FindAsync(id);
             if (dbUser == null)
             {
-                return false;
+                throw new EntityNotFoundException<User>();
             }
             _dbContext.Users.Remove(dbUser);
-            await _dbContext.SaveChangesAsync();
-            return true;
+            return await _dbContext.SaveChangesAsync() > 0;
         }
 
         public async Task<IEnumerable<User>> GetUsersAsync()
         {
-            return await _dbContext.Users.Include(x => x.Loans).ToListAsync();
+            return await _dbContext.Users.ToListAsync();
         }
 
         public async Task<User> GetByIdAsync(int id)
@@ -38,7 +39,7 @@ namespace LoanProject.Infrastructure.Services
             var dbUser = await _dbContext.Users.Include(x => x.Loans).FirstOrDefaultAsync(x => x.Id == id);
             if (dbUser == null)
             {
-                return null;
+                throw new EntityNotFoundException<User>();
             }
             return dbUser;
 
@@ -61,10 +62,7 @@ namespace LoanProject.Infrastructure.Services
             dbUser.Email = user.Email;
             dbUser.Password = PasswordHasher.HashPass(user.Password);
 
-            _dbContext.Users.Update(dbUser);
-            await _dbContext.SaveChangesAsync();
-
-            return true;
+            return await _dbContext.SaveChangesAsync() > 0;
 
         }
 
@@ -79,9 +77,7 @@ namespace LoanProject.Infrastructure.Services
 
             dbUser.IsBlocked = isblocked;
 
-            _dbContext.Users.Update(dbUser);
-            await _dbContext.SaveChangesAsync();
-            return true;
+            return await _dbContext.SaveChangesAsync() > 0;
 
         }
 
