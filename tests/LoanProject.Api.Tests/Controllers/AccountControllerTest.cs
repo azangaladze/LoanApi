@@ -1,6 +1,7 @@
 using AutoMapper;
 using FluentAssertions;
 using LoanProject.Api.Controllers;
+using LoanProject.Api.Helpers;
 using LoanProject.Api.ViewModels;
 using LoanProject.Core.Entities;
 using LoanProject.Core.Interfaces;
@@ -19,17 +20,21 @@ namespace LoanProject.Api.Tests.Controllers
     {
         private readonly Mock<IAccountService> _accountServiceMock;
         private readonly AccountController _accountController;
-        private readonly Mock<IMapper> _mapper;
         private readonly Mock<ILogger<AccountController>> _logger = new();
+
 
         public AccountControllerTest()
         {
-            _mapper = new Mock<IMapper>();
+            var mockMapper = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile(new MapperProfile());
+            });
+            var mapper = mockMapper.CreateMapper();
             _accountServiceMock = new Mock<IAccountService>();
-            var appsettings = Options.Create(new AppSettings());
+            var appsettings = Options.Create(new AppSettings { Secret = "this is my very strong secret string to keep data safe and secured" });
             _accountController = new AccountController(_accountServiceMock.Object,
                 appsettings,
-                _mapper.Object,
+                mapper,
                _logger.Object
             );
 
@@ -43,14 +48,16 @@ namespace LoanProject.Api.Tests.Controllers
 
             var userModel = GetUserModel();
             var user = GetUser();
-            
+
             _accountServiceMock.Setup(x => x.CreateAsync(user)).ReturnsAsync(user);
+
             //Act
 
             var result = await _accountController.CreateUserAsync(userModel);
             //Assert
+
             result.Should().NotBeNull();
-            result.Should().BeAssignableTo<CreatedAtRouteResult>();
+            result.Should().BeAssignableTo<CreatedResult>();
             _accountServiceMock.Verify(x => x.CreateAsync(user), Times.Never());
 
         }
@@ -60,21 +67,24 @@ namespace LoanProject.Api.Tests.Controllers
         {
 
             //Arrange
+           
+            var loginmodel = new LoginModel
+            {
+                Username = "user",
+                Password = "string123"
+            };
 
-            var loginmodel = new LoginModel();
-            loginmodel.Username = "user";
-            loginmodel.Password = "string123";
-            
             var user = GetUser();
             user.UserName = loginmodel.Username;
             user.Password = loginmodel.Password;
 
-
             _accountServiceMock.Setup(x => x.Login(loginmodel.Username, loginmodel.Password)).Returns(user);
+
             //Act
 
             var result = _accountController.Login(loginmodel);
             //Assert
+
             result.Should().NotBeNull();
             result.Should().BeAssignableTo<OkObjectResult>();
             _accountServiceMock.Verify(x => x.CreateAsync(user), Times.Never());

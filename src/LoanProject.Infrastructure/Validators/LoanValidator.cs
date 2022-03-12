@@ -1,10 +1,9 @@
 ﻿using FluentValidation;
-using LoanProject.Core.Entities;
-using LoanProject.Core.FieldStrings;
+using LoanProject.Infrastructure.Models;
 
-namespace LoanProject.Api.Validators
+namespace LoanProject.Infrastructure.Validators
 {
-    public class LoanValidator : AbstractValidator<Loan>
+    public class LoanValidator : AbstractValidator<LoanModel>
     {
         public LoanValidator()
         {
@@ -12,7 +11,7 @@ namespace LoanProject.Api.Validators
                .NotEmpty().WithMessage("Type is required")
                .Must(x => x.ToLower() == "express" || x.ToLower() == "auto" || x.ToLower() == "installment")
                .WithMessage("Type must be Express, Auto, or Installment");
-               
+
             RuleFor(x => x.Period)
                     .NotEmpty().WithMessage("Period is required")
                     .LessThanOrEqualTo(120).WithMessage("Maximum loan period is 120 months");

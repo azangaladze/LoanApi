@@ -1,23 +1,18 @@
 ﻿using AutoMapper;
 using LoanProject.Api.Helpers;
-using LoanProject.Api.Validators;
 using LoanProject.Api.ViewModels;
 using LoanProject.Core.Entities;
 using LoanProject.Core.Exceptions;
 using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Helpers;
 using LoanProject.Infrastructure.Models;
+using LoanProject.Infrastructure.Validators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace LoanProject.Api.Controllers
@@ -47,11 +42,8 @@ namespace LoanProject.Api.Controllers
         public async Task<IActionResult> CreateUserAsync(UserModel user)
         {
 
-            user.Password = PasswordHasher.HashPass(user.Password);
-
-            var mapped = _mapper.Map<User>(user);
             var validator = new UserValidator();
-            var result = validator.Validate(mapped);
+            var result = validator.Validate(user);
 
             if (!result.IsValid)
             {
@@ -59,6 +51,8 @@ namespace LoanProject.Api.Controllers
                 return BadRequest(result.Errors.Select(s => s.ErrorMessage));
             }
 
+            user.Password = PasswordHasher.HashPass(user.Password);
+            var mapped = _mapper.Map<User>(user);
             try
             {
                 await _accountService.CreateAsync(mapped);
@@ -68,7 +62,7 @@ namespace LoanProject.Api.Controllers
                 _logger.LogError("Error - Username already registered");
                 return BadRequest($"User with username {user.UserName} is already registered");
             }
-            
+
             catch (Exception ex)
             {
                 _logger.LogError(ex, ex.Message);
@@ -87,19 +81,19 @@ namespace LoanProject.Api.Controllers
                 _logger.LogError("Error - Username or Password IsNullOrEmpty");
                 return BadRequest("Username and Password is required");
             }
-                try
+            try
             {
-            var user = _accountService.Login(userModel.Username, userModel.Password);
-            var mapped = _mapper.Map<User>(user);
-            string tokenString = new TokenGenerator(_appSettings.Secret).GenerateToken(mapped);
-            return Ok(new
-            {
-                user.FirstName,
-                user.LastName,
-                user.UserName,
-                Token = tokenString
-            });
-                
+                var user = _accountService.Login(userModel.Username, userModel.Password);
+                var mapped = _mapper.Map<User>(user);
+                string tokenString = new TokenGenerator(_appSettings.Secret).GenerateToken(mapped);
+                return Ok(new
+                {
+                    user.FirstName,
+                    user.LastName,
+                    user.UserName,
+                    Token = tokenString
+                });
+
             }
             catch (EntityNotFoundException<User>)
             {

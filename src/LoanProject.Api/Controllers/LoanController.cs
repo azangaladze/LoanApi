@@ -1,16 +1,15 @@
 ﻿using AutoMapper;
 using LoanProject.Api.Helpers;
-using LoanProject.Api.Validators;
 using LoanProject.Core.Entities;
 using LoanProject.Core.Exceptions;
 using LoanProject.Core.FieldStrings;
 using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Models;
+using LoanProject.Infrastructure.Validators;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -53,6 +52,7 @@ namespace LoanProject.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetLoanByIdAsync(int id)
         {
+          
             try
             {
                 var loan = await _loanService.GetByIdAsync(id);
@@ -82,11 +82,19 @@ namespace LoanProject.Api.Controllers
                 _logger.LogError("Error - Accountant trying to add loan");
                 return BadRequest("Accountant cannot take loan, log in as User and try again");
             }
+
             loan.UserId = User.GetUserId();
-            var mapped = _mapper.Map<Loan>(loan);
+            var user = await _userService.GetByIdAsync(loan.UserId);
+            var mappedUser = _mapper.Map<User>(user);
+            if (mappedUser.IsBlocked)
+            {
+                _logger.LogError("Error - Trying to take loan, when user IsBlocked is true");
+                return BadRequest("You are in a black list, you cannot take loan");
+            }
+
 
             var validator = new LoanValidator();
-            var result = validator.Validate(mapped);
+            var result = validator.Validate(loan);
 
             if (!result.IsValid)
             {
@@ -94,6 +102,7 @@ namespace LoanProject.Api.Controllers
                 return BadRequest(result.Errors.Select(s => s.ErrorMessage));
             }
 
+            var mapped = _mapper.Map<Loan>(loan);
             try
             {
                 await _loanService.CreateAsync(mapped);
@@ -169,7 +178,7 @@ namespace LoanProject.Api.Controllers
 
                 var userId = User.GetUserId();
 
-                if (userId != loanToUpdate.UserId)
+                if (User.IsInRole(Roles.User) && userId != loanToUpdate.UserId)
                 {
                     _logger.LogError("Error - Trying to update someone else's loan");
                     return BadRequest($"You cannot update loan with id {id}, it does not belong to you");
@@ -188,16 +197,16 @@ namespace LoanProject.Api.Controllers
                     _logger.LogError("Error - Trying to update finished loan");
                     return BadRequest($"Status of loan with id {id} is finished, you cannot update it");
                 }
-                var mappedloan = _mapper.Map<Loan>(loan);
 
                 var validator = new LoanValidator();
-                var result = validator.Validate(mappedloan);
+                var result = validator.Validate(loan);
                 if (!result.IsValid)
                 {
                     _logger.LogError("Error - One or more Validation errors occured");
                     return BadRequest(result.Errors.Select(s => s.ErrorMessage));
                 }
 
+                var mappedloan = _mapper.Map<Loan>(loan);
                 await _loanService.UpdateAsync(id, mappedloan);
             }
             catch (EntityNotFoundException<Loan>)
@@ -215,7 +224,7 @@ namespace LoanProject.Api.Controllers
         }
 
         [Authorize(Roles = Roles.Accountant)]
-        [HttpPatch("status/{id}/{status}")]
+        [HttpPatch("status/{id}")]
         public async Task<IActionResult> ChangeLoanStatusAsync(int id, string status)
         {
             if (id == 0 || string.IsNullOrEmpty(status))

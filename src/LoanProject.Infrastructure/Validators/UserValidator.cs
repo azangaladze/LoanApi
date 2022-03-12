@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
-using LoanProject.Core.Entities;
+using LoanProject.Infrastructure.Models;
 
-namespace LoanProject.Api.Validators
+namespace LoanProject.Infrastructure.Validators
 {
-    public class UserValidator : AbstractValidator<User>
+    public class UserValidator : AbstractValidator<UserModel>
     {
         public UserValidator()
         {
@@ -34,7 +34,7 @@ namespace LoanProject.Api.Validators
 
             RuleFor(x => x.Password)
                 .NotEmpty().WithMessage("Password is required")
-                .MinimumLength(8).WithMessage("Password should be more than 8 symbols");
+                .MinimumLength(8).WithMessage("Password should be at least 8 symbols");
         }
     }
 }

@@ -72,13 +72,12 @@ namespace LoanProject.Infrastructure.Services
 
             if (dbUser == null || dbUser.Id != id)
             {
-                return false;
+                throw new EntityNotFoundException<User>();
             }
 
             dbUser.IsBlocked = isblocked;
 
             return await _dbContext.SaveChangesAsync() > 0;
-
         }
 
     }

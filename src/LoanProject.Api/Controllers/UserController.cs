@@ -5,13 +5,13 @@ using AutoMapper;
 using LoanProject.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using LoanProject.Core.FieldStrings;
-using LoanProject.Api.Validators;
 using LoanProject.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using LoanProject.Core.Exceptions;
 using LoanProject.Api.Helpers;
+using LoanProject.Infrastructure.Validators;
 
 namespace LoanProject.Api.Controllers
 {
@@ -109,7 +109,7 @@ namespace LoanProject.Api.Controllers
             var mapped = _mapper.Map<User>(user);
 
             var validator = new UserValidator();
-            var result = validator.Validate(mapped);
+            var result = validator.Validate(user);
 
             if (!result.IsValid)
             {
@@ -137,17 +137,22 @@ namespace LoanProject.Api.Controllers
         }
 
         [Authorize(Roles = Roles.Accountant)]
-        [HttpPatch("status/{id}/{isblocked}")]
-        public async Task<IActionResult> ChangeUserStatusAsync(int id, bool isBlocked)
+        [HttpPatch("status/{id}")]
+        public async Task<IActionResult> ChangeUserStatusAsync(int id, [FromBody]bool isBlocked)
         {
             try
             {
                 var changed = await _userService.ChangeStatusAsync(id, isBlocked);
                 if (!changed)
                 {
-                    _logger.LogError("Error - Invalid user id, user not found");
-                    return NotFound($"There is no user with id {id}");
+                    _logger.LogError("Error - Trying to update with same status");
+                    return BadRequest("Status was not updated");
                 }
+            }
+            catch (EntityNotFoundException<User>)
+            {
+                _logger.LogError("Error - Invalid user id, user not found");
+                return NotFound($"There is no user with id {id}");
             }
             catch (Exception ex)
             {
