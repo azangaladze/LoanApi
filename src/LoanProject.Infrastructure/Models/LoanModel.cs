@@ -1,5 +1,4 @@
-﻿using LoanProject.Core.FieldStrings;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace LoanProject.Infrastructure.Models
 {

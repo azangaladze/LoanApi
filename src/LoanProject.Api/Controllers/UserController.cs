@@ -4,7 +4,6 @@ using LoanProject.Infrastructure.Models;
 using AutoMapper;
 using LoanProject.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
-using LoanProject.Core.FieldStrings;
 using LoanProject.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,6 +11,7 @@ using System.Linq;
 using LoanProject.Core.Exceptions;
 using LoanProject.Api.Helpers;
 using LoanProject.Infrastructure.Validators;
+using LoanProject.Core.EntityFields;
 
 namespace LoanProject.Api.Controllers
 {
@@ -146,7 +146,7 @@ namespace LoanProject.Api.Controllers
                 if (!changed)
                 {
                     _logger.LogError("Error - Trying to update with same status");
-                    return BadRequest("Status was not updated");
+                    return BadRequest($"Status was not updated it is already {isBlocked}");
                 }
             }
             catch (EntityNotFoundException<User>)

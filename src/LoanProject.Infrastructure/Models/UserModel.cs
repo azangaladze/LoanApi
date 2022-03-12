@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace LoanProject.Infrastructure.Models
+﻿namespace LoanProject.Infrastructure.Models
 {
     public class UserModel
     {

@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using LoanProject.Api.Helpers;
 using LoanProject.Core.Entities;
+using LoanProject.Core.EntityFields;
 using LoanProject.Core.Exceptions;
-using LoanProject.Core.FieldStrings;
 using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Models;
 using LoanProject.Infrastructure.Validators;
@@ -52,7 +52,7 @@ namespace LoanProject.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetLoanByIdAsync(int id)
         {
-          
+
             try
             {
                 var loan = await _loanService.GetByIdAsync(id);
@@ -125,7 +125,7 @@ namespace LoanProject.Api.Controllers
                 var loanToDelete = await _loanService.GetByIdAsync(id);
                 var mappedLoan = _mapper.Map<Loan>(loanToDelete);
 
-                if (User.IsInRole(Roles.User) && mappedLoan.Loanstatus.ToLower() != LoanStatus.Processing.ToLower())
+                if (User.IsInRole(Roles.User) && mappedLoan.Loanstatus != LoanStatuses.Processing)
                 {
                     _logger.LogError("Error - Trying to delete finished loan");
                     return BadRequest($"Process of loan with id {id} is finished, you cannot delete it");
@@ -192,7 +192,7 @@ namespace LoanProject.Api.Controllers
                     return BadRequest("You are in a black list, you cannot update your loan");
                 }
 
-                if (User.IsInRole(Roles.User) && loanToUpdate.Loanstatus.ToLower() != LoanStatus.Processing.ToLower())
+                if (User.IsInRole(Roles.User) && loanToUpdate.Loanstatus != LoanStatuses.Processing)
                 {
                     _logger.LogError("Error - Trying to update finished loan");
                     return BadRequest($"Status of loan with id {id} is finished, you cannot update it");
@@ -225,23 +225,17 @@ namespace LoanProject.Api.Controllers
 
         [Authorize(Roles = Roles.Accountant)]
         [HttpPatch("status/{id}")]
-        public async Task<IActionResult> ChangeLoanStatusAsync(int id, string status)
+        public async Task<IActionResult> ChangeLoanStatusAsync(int id, LoanStatuses status)
         {
-            if (id == 0 || string.IsNullOrEmpty(status))
+            if (status == 0)
             {
-                _logger.LogError("Error - Invalid Status or Id");
-                return BadRequest("Invalid Status or Id");
+                _logger.LogError("Error - Status was not selected");
+                return BadRequest("Status is required");
             }
 
             try
             {
-                var changed = await _loanService.ChangeLoanStatusAsync(id, status);
-                if (!changed)
-                {
-                    _logger.LogError("Error - Invalid Status");
-                    return BadRequest($"Status can only be changed to Positive or Negative");
-                }
-
+                await _loanService.ChangeLoanStatusAsync(id, status);
             }
             catch (EntityNotFoundException<Loan>)
             {

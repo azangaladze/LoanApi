@@ -4,7 +4,6 @@ using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Context;
 using LoanProject.Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

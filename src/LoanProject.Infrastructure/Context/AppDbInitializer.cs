@@ -1,5 +1,5 @@
 ﻿using LoanProject.Core.Entities;
-using LoanProject.Core.FieldStrings;
+using LoanProject.Core.EntityFields;
 using LoanProject.Infrastructure.Helpers;
 using System.Linq;
 

@@ -91,7 +91,7 @@ namespace LoanProject.Api.Tests.Controllers
         }
 
         [Fact]
-        public async Task ChangeUserStatusAsync_ShouldReturnNotFound_WhenStatusDoesNotChange()
+        public async Task ChangeUserStatusAsync_ShouldReturnBadRequest_WhenStatusDoesNotChange()
         {
             //Arrange
             int id = _fixture.Create<int>();
@@ -103,7 +103,7 @@ namespace LoanProject.Api.Tests.Controllers
             //Assert
 
             result.Should().NotBeNull();
-            result.Should().BeAssignableTo<NotFoundObjectResult>();
+            result.Should().BeAssignableTo<BadRequestObjectResult>();
             _userServiceMock.Verify(x => x.ChangeStatusAsync(id, status), Times.Once());
         }
     }

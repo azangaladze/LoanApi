@@ -3,12 +3,12 @@ using AutoMapper;
 using FluentAssertions;
 using LoanProject.Api.Controllers;
 using LoanProject.Core.Entities;
+using LoanProject.Core.EntityFields;
 using LoanProject.Core.Exceptions;
 using LoanProject.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -79,7 +79,7 @@ namespace LoanProject.Api.Tests.Controllers
         {
             //Arrange
             int id = _fixture.Create<int>();
-            string status = "Positive";
+            var status = LoanStatuses.Positive;
             _loanServiceMock.Setup(x => x.ChangeLoanStatusAsync(id, status)).ReturnsAsync(true);
             //Act
 
@@ -97,7 +97,7 @@ namespace LoanProject.Api.Tests.Controllers
         {
             //Arrange
             int id = _fixture.Create<int>();
-            string status = _fixture.Create<string>();
+            LoanStatuses status = 0;
             _loanServiceMock.Setup(x => x.ChangeLoanStatusAsync(id, status)).ReturnsAsync(false);
             //Act
 
@@ -107,21 +107,27 @@ namespace LoanProject.Api.Tests.Controllers
             result.Should().NotBeNull();
             result.Should().BeAssignableTo<IActionResult>();
             result.Should().BeAssignableTo<BadRequestObjectResult>();
-            _loanServiceMock.Verify(x => x.ChangeLoanStatusAsync(id, status), Times.Once());
+            _loanServiceMock.Verify(x => x.ChangeLoanStatusAsync(id, status), Times.Never);
         }
+
+
         [Fact]
         public void ChangeLoanStatusAsync_ShouldReturnNotFound_WhenIdIsInvalid()
         {
             //Arrange
             int id = _fixture.Create<int>();
-            string status = _fixture.Create<string>();
+            LoanStatuses status = _fixture.Create<LoanStatuses>();
             _loanServiceMock.Setup(x => x.ChangeLoanStatusAsync(id, status)).Throws<EntityNotFoundException<Loan>>();
             //Act
 
-            var result = _loanController.Invoking(x => x.ChangeLoanStatusAsync(id, status));
-            
+            var result = _loanController.ChangeLoanStatusAsync(id, status);
+           
+
             //Assert
-            result.Should().ThrowAsync<EntityNotFoundException<Loan>>();
+            result.Result.Should().NotBeNull();
+            result.Result.Should().BeAssignableTo<IActionResult>();
+            result.Result.Should().BeAssignableTo<NotFoundObjectResult>();
+            _loanServiceMock.Verify(x => x.ChangeLoanStatusAsync(id, status), Times.Once());
 
         }
 

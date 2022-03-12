@@ -1,9 +1,5 @@
 ﻿using LoanProject.Core.Entities;
-using LoanProject.Core.FieldStrings;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System;
-using System.Data;
 
 namespace LoanProject.Infrastructure.Context
 {

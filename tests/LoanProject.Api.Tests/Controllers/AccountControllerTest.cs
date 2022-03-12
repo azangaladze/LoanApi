@@ -58,7 +58,7 @@ namespace LoanProject.Api.Tests.Controllers
 
             result.Should().NotBeNull();
             result.Should().BeAssignableTo<CreatedResult>();
-            _accountServiceMock.Verify(x => x.CreateAsync(user), Times.Never());
+            
 
         }
 
@@ -87,9 +87,11 @@ namespace LoanProject.Api.Tests.Controllers
 
             result.Should().NotBeNull();
             result.Should().BeAssignableTo<OkObjectResult>();
-            _accountServiceMock.Verify(x => x.CreateAsync(user), Times.Never());
+           
 
         }
+
+       
 
         private static UserModel GetUserModel()
         {

@@ -1,10 +1,9 @@
 ﻿using LoanProject.Core.Entities;
+using LoanProject.Core.EntityFields;
 using LoanProject.Core.Exceptions;
-using LoanProject.Core.FieldStrings;
 using LoanProject.Core.Interfaces;
 using LoanProject.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -70,7 +69,7 @@ namespace LoanProject.Infrastructure.Services
 
         }
 
-        public async Task<bool> ChangeLoanStatusAsync(int id, string status)
+        public async Task<bool> ChangeLoanStatusAsync(int id, LoanStatuses status)
         {
 
             var dbLoan = await _dbContext.Loans.FindAsync(id);
@@ -78,15 +77,11 @@ namespace LoanProject.Infrastructure.Services
             {
                 throw new EntityNotFoundException<Loan>();
             }
-            if (status.ToLower() == LoanStatus.Positive.ToLower() ||
-                status.ToLower() == LoanStatus.Negative.ToLower())
-            {
-                dbLoan.Loanstatus = status;
-                return await _dbContext.SaveChangesAsync() > 0;
-                
-            }
 
-            return false;
+            dbLoan.Loanstatus = status;
+            return await _dbContext.SaveChangesAsync() > 0;
+
+
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using LoanProject.Core.Entities;
+using LoanProject.Core.EntityFields;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -11,6 +12,6 @@ namespace LoanProject.Core.Interfaces
         Task<Loan> CreateAsync(Loan loan);
         Task<bool> UpdateAsync(int id, Loan loan);
         Task<bool> DeleteAsync(int id);
-        Task<bool> ChangeLoanStatusAsync(int id, string status);
+        Task<bool> ChangeLoanStatusAsync(int id, LoanStatuses status);
     }
 }

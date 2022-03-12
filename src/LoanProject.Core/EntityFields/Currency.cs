@@ -1,4 +1,4 @@
-﻿namespace LoanProject.Core.FieldStrings
+﻿namespace LoanProject.Core.EntityFields
 {
     public abstract class Currency
     {

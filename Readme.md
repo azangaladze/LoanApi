@@ -14,16 +14,14 @@ All the information is stored in Database
 	
 ## Highlights
 There are some features in this project:
-* Authentication
+* Authorize with JWT bearer token (also available using Swagger)
+* Storing hashed passwords in db
+* Roles
 * AutoMapper
 * SeriLog
-* JWT bearer token
-* Roles
-* Storing hashed passwords in db
 * Fluent Validation
 * Custom Exceptions and error messages
-* Authorize in Swagger 
-* xUnit test with fluent assertion
+* xUnit test with Moq, Fluent Assertion and AutoFixture 
 	
 ## Setup
 To run this project: 
@@ -55,11 +53,11 @@ There are roles in this project: Accountant and User
 Application consists of following parts:
 ### src
 * #### Api
-This layer contains all application logic. Here are all controllers and validations
+This layer contains all application logic. Here are all controllers, mapperprofile and helpers for user(TokenGenerator and GetUserId)
 * #### Core
-This layer contains entities, entity fields, interfaces
+This layer contains entities, entity fields, interfaces, exceptions
 * #### Infrastructure
-This layer contains classes for accessing database, services, models
+This layer contains classes for accessing database, services, models, validations
 ### tests
 Contains all tests for this application
 

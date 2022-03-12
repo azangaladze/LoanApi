@@ -1,4 +1,4 @@
-﻿using LoanProject.Core.FieldStrings;
+﻿using LoanProject.Core.EntityFields;
 using System.Collections.Generic;
 
 namespace LoanProject.Core.Entities

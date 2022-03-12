@@ -1,4 +1,4 @@
-﻿using LoanProject.Core.FieldStrings;
+﻿using LoanProject.Core.EntityFields;
 using System.Text.Json.Serialization;
 
 namespace LoanProject.Core.Entities
@@ -10,7 +10,7 @@ namespace LoanProject.Core.Entities
         public double Amount { get; set; }
         public string Currency { get; set; }
         public int Period { get; set; }
-        public string Loanstatus { get; set; } = LoanStatus.Processing;
+        public LoanStatuses Loanstatus { get; set; } = LoanStatuses.Processing;
         public int UserId { get; set; }
         [JsonIgnore]
         public User User { get; set; }
