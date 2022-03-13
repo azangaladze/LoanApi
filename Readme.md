@@ -27,7 +27,7 @@ There are some features in this project:
 To run this project: 
 * Clone or download .zip
 * Start project in visual studio
-* In order to create database open Package Manager Console and run add-migration, then update-database
+* In order to create database open Package Manager Console and run add-migration (default project LoanProject.Infrastructure), then update-database
 * In order to perform CRUD operations you need to authorize
 * There are two sample users in DB User and Accountant 
 * You can register a new User or use existing ones (usernames and passwords provided at the end of file)

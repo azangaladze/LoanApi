@@ -47,7 +47,7 @@ namespace LoanProject.Api.Controllers
 
             if (!result.IsValid)
             {
-                _logger.LogError("Error - One or more Validation errors occured");
+                _logger.LogError("Error - One or more Validation errors for user occured");
                 return BadRequest(result.Errors.Select(s => s.ErrorMessage));
             }
 

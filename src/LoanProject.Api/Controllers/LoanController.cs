@@ -98,7 +98,7 @@ namespace LoanProject.Api.Controllers
 
             if (!result.IsValid)
             {
-                _logger.LogError("Error - One or more Validation errors occured");
+                _logger.LogError("Error - One or more Validation errors for loan occured");
                 return BadRequest(result.Errors.Select(s => s.ErrorMessage));
             }
 
@@ -202,7 +202,7 @@ namespace LoanProject.Api.Controllers
                 var result = validator.Validate(loan);
                 if (!result.IsValid)
                 {
-                    _logger.LogError("Error - One or more Validation errors occured");
+                    _logger.LogError("Error - One or more Validation errors for loan occured");
                     return BadRequest(result.Errors.Select(s => s.ErrorMessage));
                 }
 

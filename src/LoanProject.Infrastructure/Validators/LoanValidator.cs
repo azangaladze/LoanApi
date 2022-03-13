@@ -17,7 +17,7 @@ namespace LoanProject.Infrastructure.Validators
                     .LessThanOrEqualTo(120).WithMessage("Maximum loan period is 120 months");
 
             RuleFor(x => x.Amount)
-                    .NotNull().WithMessage("Amount cannot be empty")
+                    .NotEmpty().WithMessage("Amount is required")
                     .GreaterThan(-1).WithMessage("Amount cannot be nagative number")
                     .LessThanOrEqualTo(100000).WithMessage("Maximum amount is 100000");
 
